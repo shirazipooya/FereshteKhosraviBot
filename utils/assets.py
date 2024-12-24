@@ -346,7 +346,6 @@ def check_visit_count(engine, table, user_id, max_calculation):
     with Session(engine) as session:
         statement = select(table).where(table.user_id == user_id)
         user = session.exec(statement).first()
-        print(user)
         if user and user.count_visit >= max_calculation:
             return False
         return True

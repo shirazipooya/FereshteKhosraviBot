@@ -890,7 +890,6 @@ async def send_message(message):
     with Session(engine) as session:
         result = session.exec(text(f"SELECT user_id FROM user"))
         results = [row[0] for row in result.fetchall()]
-        print(results)
     message_text = (
         "همین الان بیا منتظرم !\n\n"
         "این لایو کد ثروت و جایزه داره\n\n"
