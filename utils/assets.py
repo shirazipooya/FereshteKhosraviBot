@@ -78,6 +78,9 @@ def dashboard_keyboard():
         InlineKeyboardButton(text="عدد شانس (کوا)", callback_data="kua_button"),
         InlineKeyboardButton(text="زودیاک تولد", callback_data="zodiac_button")
     )
+    # markup.add(
+    #     InlineKeyboardButton(text="دوره‌ها", callback_data="courses"),
+    # )
     markup.add(
         InlineKeyboardButton(text="راهنما", callback_data="help_button"),
         InlineKeyboardButton(text="شروع", callback_data="start_button"),
@@ -218,6 +221,30 @@ def calculate_kua_number(
     #     kua_number = 9 if kua_number == 0 else (8 if kua_number == 5 else kua_number)
 
     return kua_number
+
+def calculate_zodiac_animal(
+    zodiac_animal_dataset,
+    birth_year: int,
+) -> int:
+    
+    zodiac_animal = zodiac_animal_dataset.get(str(birth_year), None)
+    
+    # year_sum = sum(map(int, str(birth_year)[-2:]))
+
+    # while year_sum > 9:
+    #     year_sum = sum(map(int, str(year_sum)))
+    
+    # kua_number = 0
+
+    # if gender.lower() == "male":
+    #     kua_number = 10 - year_sum
+    #     kua_number = 9 if kua_number == 0 else (2 if kua_number == 5 else kua_number)
+    # elif gender.lower() == "female":
+    #     kua_number = year_sum + 5
+    #     kua_number = sum(map(int, str(kua_number))) if kua_number > 9 else kua_number
+    #     kua_number = 9 if kua_number == 0 else (8 if kua_number == 5 else kua_number)
+
+    return zodiac_animal
 
 
 

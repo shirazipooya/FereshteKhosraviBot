@@ -4,6 +4,7 @@ import json
 import asyncio
 from sqlmodel import SQLModel, create_engine, Session, select, text
 from utils import jalali
+from collections import defaultdict
 from utils.assets import (
     CHINESE_SIGNS,
     CHINESE_ELEMENTS,
@@ -19,6 +20,7 @@ from utils.assets import (
     insert_to_zodiac_table,
     extract_chinese_year,
     calculate_kua_number,
+    calculate_zodiac_animal,
     send_join_channel_button,
     decade_buttons,
     year_buttons,
@@ -38,6 +40,7 @@ from telebot.types import (
     KeyboardButton,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
+    CallbackQuery,
 )
 
 
@@ -72,6 +75,9 @@ with open('utils/zodiac.json', 'r', encoding='utf-8') as file:
 
 with open('utils/kua.json', 'r', encoding='utf-8') as file:
     kua_data = json.load(file)
+
+with open('utils/zodiac_animal_dataset.json', 'r', encoding='utf-8') as file:
+    zodiac_animal_dataset = json.load(file)
 
 
 
@@ -755,22 +761,28 @@ async def zodiac_command_handle_day_selection(call):
                     )
                 return
 
+            await bot.send_message(
+                chat_id=user_id,
+                text=f"📝 اطلاعات دریافت‌ شده:\n- تاریخ تولد: {birth_year}/{birth_month}/{birth_day}"
+            )
+            
             birth_year_g, birth_month_g, birth_day_g = jalali.Persian((int(birth_year), int(birth_month), int(birth_day))).gregorian_tuple()
             
             chinese_year = extract_chinese_year(
                 date_string=f"{birth_year_g:04d}-{birth_month_g:02d}-{birth_day_g:02d}"
             )
-
-
-            await bot.send_message(
-                chat_id=user_id,
-                text=f"📝 اطلاعات دریافت‌ شده:\n- تاریخ تولد: {birth_year}/{birth_month}/{birth_day}"
+            
+            chinese_sign_eng = calculate_zodiac_animal(
+                zodiac_animal_dataset=zodiac_animal_dataset,
+                birth_year=birth_year_g,
             )
-
+            
             chinese_sign = CHINESE_SIGNS[int(chinese_year % 12)]
+            
+            
             chinese_element = CHINESE_ELEMENTS[int(chinese_year % 10) // 2]
             
-            file_path = os.path.abspath(f"./data/img/zodiac_{chinese_sign}.png")
+            file_path = os.path.abspath(f"./data/img/zodiac_{chinese_sign_eng}.png")
             if not os.path.exists(file_path):
                 print("File not found:", file_path)
             else:
@@ -780,14 +792,14 @@ async def zodiac_command_handle_day_selection(call):
                 await bot.send_photo(
                     chat_id=user_id,
                     photo=photo,
-                    caption=f"زودیاک تولد شما «{CHINESE_SIGNS_FARSI[chinese_sign]}» می‌باشد!",
+                    caption=f"زودیاک تولد شما «{CHINESE_SIGNS_FARSI[chinese_sign_eng]}» می‌باشد!",
                 )
 
 
             await bot.send_message(
                 chat_id=user_id,
                 text=(
-                    f"{zodiac_data[chinese_sign]["description"]}\n\n"
+                    f"{zodiac_data[chinese_sign_eng]["description"]}\n\n"
                     # f"عددهای شانس شما: {zodiac_data[chinese_sign]["lucky_numbers"]}\n\n"
                     # f"رنگ‌های شانس شما: {zodiac_data[chinese_sign]["lucky_colors"]}\n\n"
                 )
@@ -812,10 +824,15 @@ async def zodiac_command_handle_day_selection(call):
             await bot.send_message(
                 chat_id=user_id,
                 text=(
-                    "حالا اگه میخوای با استفاده از اطلاعاتی که کسب کردی سال 2025 که سال مار هست و با سرعت همه چی اتفاق میافته! تو هم با سرعت به سمت پیشرفت و درآمد قدم بگذاری !\n\n"    
-                    "همین الان به آیدی زیر پیام بده تا راهنماییت کنم.\n\n"      
+                    "اگه میخوای با استفاده از اطلاعاتی که کسب کردی سال 2025 که سال مار هست و با سرعت همه چی اتفاق میافته! تو هم با سرعت به سمت پیشرفت و درآمد قدم بگذاری !\n\n"
+                    "❌❌❌❌\n\n"
+                    "۲۷ دی ماه\n"
+                    "ساعت ۱۱:۱۱\n"
+                    "ظرفیت ثبت نام دوره ستارگان رو برای ۵۰۰ نفر باز میکنم \n"
+                    "بجای ۳ میلیون میتونی این دوره رو با مبلغ ۸۸۸ هزار تومان تهیه کنی .\n\n"      
+                    "❌کلمه ثبت نام رو به آیدی زیر بفرست👇🏼\n\n"
                     "@fereshtehelp\n"      
-                    "🔺🔺🔺🔺🔺\n"      
+                    "👆👆👆👆\n"      
                 ),
                 parse_mode="HTML",
             )    
@@ -931,8 +948,63 @@ async def main():
             BotCommand("kua", "عدد شانس (کوا)"),
             BotCommand("zodiac", "محاسبه زودیاک تولد"),
             BotCommand("help", "راهنما"),
+            # BotCommand("send", "راهنما"),
          ]
     )
+    
+    
+    
+    
+    
+    
+    
+    # ADMIN_CHAT_ID = 52260445
+    # user_dataaa = defaultdict(dict) 
+    # @bot.message_handler(commands=['send'])
+    # async def start(message):
+    #     await bot.send_message(message.chat.id, "Hello! Please send a picture.")
+    
+    
+    # @bot.message_handler(func=lambda message: message.content_type != 'photo')
+    # async def handle_non_photo(message):
+    #     print(f"Debug: Non-photo content received. Content type: {message.content_type}")
+    #     await bot.send_message(message.chat.id, "Please send only a picture.")
+    
+       
+    # @bot.message_handler(content_types=['photo'])
+    # async def handle_photo(message):
+    #     user_id = message.chat.id
+    #     photo_id = message.photo[-1].file_id  # Get the highest resolution photo
+
+    #     # Store the user's photo data
+    #     user_dataaa[user_id]['photo_id'] = photo_id
+
+    #     # Forward the photo to the admin with inline buttons
+    #     markup = InlineKeyboardMarkup()
+    #     accept_button = InlineKeyboardButton("Accept", callback_data=f"accept:{user_id}")
+    #     reject_button = InlineKeyboardButton("Reject", callback_data=f"reject:{user_id}")
+    #     markup.add(accept_button, reject_button)
+
+    #     await bot.send_photo(ADMIN_CHAT_ID, photo_id, caption=f"Photo from user {user_id}", reply_markup=markup)
+    #     await bot.send_message(user_id, "Your photo has been sent for review.")
+    
+    
+    
+    # @bot.callback_query_handler(func=lambda call: call.data.startswith(('accept', 'reject')))
+    # async def handle_decision(call: CallbackQuery):
+    #     decision, user_id = call.data.split(":")
+    #     user_id = int(user_id)
+
+    #     if decision == "accept":
+    #         await bot.send_message(user_id, "Your photo has been accepted. Thank you!")
+    #         await bot.answer_callback_query(call.id, "You accepted the photo.")
+    #     elif decision == "reject":
+    #         await bot.send_message(user_id, "Your photo has been rejected. Please try again.")
+    #         await bot.answer_callback_query(call.id, "You rejected the photo.")
+
+    #     # Optionally remove the inline keyboard from the admin's message
+    #     await bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)   
+    
     
     try:
         print("Bot is running ...")
