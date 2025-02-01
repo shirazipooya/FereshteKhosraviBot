@@ -14,7 +14,6 @@ class User(SQLModel, table=True):
     create_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-
 class Kua(SQLModel, table=True):
     user_id: Optional[int] = Field(primary_key=True)
     gender: Optional[str]
@@ -29,3 +28,10 @@ class Zodiac(SQLModel, table=True):
     chinese_sign: Optional[str]
     chinese_element: Optional[str]
     count_visit: Optional[int] = 0
+
+
+class Mashhad(SQLModel, table=True):
+    user_id: Optional[int] = Field(primary_key=True)
+    name: Optional[str]
+    city: Optional[str]
+    create_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

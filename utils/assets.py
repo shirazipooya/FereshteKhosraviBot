@@ -2,7 +2,7 @@ import datetime
 import lunardate
 from sqlmodel import Session, select
 from utils import jalali
-from models import User, Kua, Zodiac
+from models import User, Kua, Zodiac, Mashhad
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import (
     InlineKeyboardMarkup,
@@ -72,8 +72,12 @@ CHINESE_ELEMENTS_FARSI = {
     "Earth": "زمین",
 }
 
+
 def dashboard_keyboard():
     markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton(text="ثبت نام سفر مشهد", callback_data="mashhad_button"),
+    )
     markup.add(
         InlineKeyboardButton(text="عدد شانس (کوا)", callback_data="kua_button"),
         InlineKeyboardButton(text="زودیاک تولد", callback_data="zodiac_button")
@@ -369,10 +373,32 @@ def insert_to_user_table(
         session.commit()
 
 
+def insert_to_mashhad_table(
+    engine, user_id, name, city
+):
+    tmp = Mashhad(
+        user_id=user_id,
+        name=name,
+        city=city,
+    )
+    with Session(engine) as session:
+        session.merge(tmp)
+        session.commit()
+
+
 def check_visit_count(engine, table, user_id, max_calculation):
     with Session(engine) as session:
         statement = select(table).where(table.user_id == user_id)
         user = session.exec(statement).first()
         if user and user.count_visit >= max_calculation:
+            return False
+        return True
+
+
+def check_register(engine, table, user_id):
+    with Session(engine) as session:
+        statement = select(table).where(table.user_id == user_id)
+        user = session.exec(statement).first()
+        if user:
             return False
         return True

@@ -18,6 +18,7 @@ from utils.assets import (
     insert_to_user_table,
     insert_to_kua_table,
     insert_to_zodiac_table,
+    insert_to_mashhad_table,
     extract_chinese_year,
     calculate_kua_number,
     calculate_zodiac_animal,
@@ -27,9 +28,10 @@ from utils.assets import (
     month_buttons,
     day_buttons,
     gender_buttons,
-    check_visit_count
+    check_visit_count,
+    check_register
 )
-from models import User, Kua, Zodiac
+from models import User, Kua, Zodiac, Mashhad
 from dotenv import load_dotenv
 from telebot import apihelper
 from telebot.async_telebot import AsyncTeleBot
@@ -54,6 +56,7 @@ load_dotenv()
 
 # Temporary Storage For User Input Data
 user_data = {}
+user_mashhad_data = {}
 user_kua_data = {}
 user_zodiac_data = {}
 
@@ -216,10 +219,21 @@ async def handle_city(message):
 #                              Handle Dashboard Command
 # ------------------------------------------------------------------------------ #
 
-@bot.callback_query_handler(func=lambda call: call.data in ["kua_button", "zodiac_button", "help_button", "start_button"])
+@bot.callback_query_handler(func=lambda call: call.data in ["mashhad_button", "kua_button", "zodiac_button", "help_button", "start_button"])
 async def handle_dashboard_callbacks(call):
     user_id=call.message.chat.id
-    if call.data == "kua_button":
+    if call.data == "mashhad_button":
+        if await user_channel_check(
+            engine=engine,
+            table=Mashhad,
+            bot=bot,
+            message=call.message,
+            user_id=user_id,
+            max_visit=MAX_VISIT,
+            channels=CHANNELS
+        ):
+            await mashhad_command(call.message)
+    elif call.data == "kua_button":
         if await user_channel_check(
             engine=engine,
             table=Kua,
@@ -272,6 +286,108 @@ async def handle_confirm_join(call):
                 text="عضویت شما تایید شد ✅. حالا می‌توانید از امکانات ربات استفاده کنید.",
                 reply_markup=markup
             )
+
+
+# ------------------------------------------------------------------------------ #
+#                              Handle /mashhad Command
+# ------------------------------------------------------------------------------ #
+@bot.message_handler(commands=['mashhad'])
+async def mashhad_command(message):
+    user_id = message.chat.id 
+    if await user_channel_check(
+        engine=engine,
+        table=Mashhad,
+        bot=bot,
+        message=message,
+        user_id=user_id,
+        max_visit=MAX_VISIT,
+        channels=CHANNELS
+    ):
+        if check_register(
+            engine=engine,
+            table=Mashhad,
+            user_id=user_id,
+        ):
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=(
+                    "قراره یک نفر برنده سفر مشهد و زیارت حرم امام رضا (ع) بشه.\n\n"
+                    "اطلاعاتی که در ادامه ازت خواسته میشه رو با دقت وارد کن تا ثبت نام اولیه‌ات تکمیل بشه.\n\n"
+                ),
+                parse_mode="HTML",
+            )
+            user_mashhad_data[message.chat.id] = {
+                "state": "awaiting_name_mashhad",
+            }
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=f"لطفا اسم و فامیل خودت را به فارسی این زیر بنویس:",
+                reply_markup=ReplyKeyboardRemove()
+            )
+        else:
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text="شما قبلا ثبت نام اولیه را انجام داده‌اید، نیاز به ثبت نام مجدد نمی‌باشد!"
+            )
+
+
+@bot.message_handler(func=lambda message: user_mashhad_data.get(message.chat.id, {}).get("state") == "awaiting_name_mashhad")
+async def handle_mashhad_name(message):
+    name = message.text
+    user_mashhad_data[message.chat.id] = {
+        "state": "awaiting_mashhad_city",
+        "name": name,
+    }
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=f"لطفا شهر خودت را به فارسی این زیر بنویس:",
+    )
+
+
+@bot.message_handler(func=lambda message: user_mashhad_data.get(message.chat.id, {}).get("state") == "awaiting_mashhad_city")
+async def handle_mashhad_city(message):
+    user_id = message.chat.id
+    name = user_mashhad_data[message.chat.id]["name"]
+    city = message.text
+    print("Start: ", user_id)
+    print("Name: ", name)
+    print("City: ", city)
+    print("End: ", user_id)
+    insert_to_mashhad_table(
+        engine=engine,
+        user_id=user_id,
+        name=name,
+        city=city
+    )
+    del user_mashhad_data[message.chat.id]
+    markup = dashboard_keyboard()
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=(
+            "شرایط این جایزه رو کامل بخون\n"
+            "قراره یک نفر مهمون خودم بیاد مشهد تا بریم زیارت امام رضا 🌷\n\n"
+            "چله ژورنال ثروت :\n"
+            "( کوچ 40 روزه )\n\n"
+            "💥40 کُد روزانه\n"
+            "💥40 روز شکرگزاری\n"
+            "💥40 روز باور فراوانی انرژی\n"
+            "ذهنی ، روحی ، جسمی ، محیط\n"
+            "( برگزاری در کانال خصوصی تلگرام و روبیکا )\n\n"
+            "🎁 هدیه ویژه : مدیتیشن پول \n"
+            "100 نفر اول\n\n"
+            "🎁🧳یک نفر برنده سفر مشهد و زیارت حرم امام رضا 💚🙏\n\n"
+            "🔺🔺🔺🔺کافیه توی این دوره شرکت کنی تا توی قرعه کشی سفر مشهد شانست رو امتحان کنی !\n\n"
+            "⏰️ثبت نام : از 15 بهمن \n"
+            "❗️فقط برای 300 نفر \n"
+            "✔️قیمت دوره : 1/280 تومان \n\n"
+            "🛑ظرفیت خیلی محدوده\n"
+            "اگه میخوای پیش ثبت نام کنی \n"
+            "به این آیدی پیام بده 👇🏼\n\n"
+            "@fereshtehelp"
+        ),
+        parse_mode="HTML",
+        reply_markup=markup
+    )
 
 
 # ------------------------------------------------------------------------------ #
@@ -953,6 +1069,7 @@ async def main():
     await bot.set_my_commands(
          commands=[
             BotCommand("start", "صفحه اصلی بات"),
+            BotCommand("mashhad", "ثبت نام سفر مشهد"),
             BotCommand("kua", "عدد شانس (کوا)"),
             BotCommand("zodiac", "محاسبه زودیاک تولد"),
             BotCommand("help", "راهنما"),
