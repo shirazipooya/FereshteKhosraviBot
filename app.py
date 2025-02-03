@@ -23,6 +23,7 @@ from utils.assets import (
     calculate_kua_number,
     calculate_zodiac_animal,
     send_join_channel_button,
+    send_message_to_all_users,
     decade_buttons,
     year_buttons,
     month_buttons,
@@ -63,6 +64,7 @@ user_zodiac_data = {}
 # Your Channel Username
 # CHANNELS = ["helekhobmalkhob", "aliravanbakhsh1"]
 CHANNELS = ["helekhobmalkhob"]
+# CHANNELS = ["HydroCodeChannel"]
 
 # Maximum Visit
 MAX_VISIT = 0
@@ -1056,6 +1058,24 @@ async def send_message(message):
         chat_id=message.chat.id,
         text=f"Send Message to {n} Users!"
     )
+
+@bot.message_handler(commands=["broadcast"])
+async def handle_broadcast(message):
+    if message.from_user.id != 7690029281:
+        await bot.reply_to(message, "🚫 You are not authorized to use this command.")
+        return
+    
+    msg_text = message.text[len("/broadcast") :].strip()
+    if msg_text:
+        await send_message_to_all_users(engine=engine, table='user', bot=bot, message_text=msg_text)
+        await bot.reply_to(message, "✅ Message sent to all users!")
+    else:
+        await bot.reply_to(message, "⚠️ Please provide a message after /broadcast.")
+
+
+
+
+
 
 async def main():
     await bot.set_my_description(

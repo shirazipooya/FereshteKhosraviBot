@@ -1,6 +1,7 @@
+import asyncio
 import datetime
 import lunardate
-from sqlmodel import Session, select
+from sqlmodel import SQLModel, create_engine, Session, select, text
 from utils import jalali
 from models import User, Kua, Zodiac, Mashhad
 from telebot.async_telebot import AsyncTeleBot
@@ -402,3 +403,23 @@ def check_register(engine, table, user_id):
         if user:
             return False
         return True
+
+
+def get_all_user_ids(engine, table):
+    with Session(engine) as session:
+        result = session.exec(text(f"SELECT user_id FROM {table}"))
+    return [row[0] for row in result.fetchall()]
+
+
+async def send_message_to_all_users(engine, table, bot, message_text):
+    user_ids = get_all_user_ids(engine=engine, table=table)
+    for user_id in user_ids:
+        try:
+            await bot.send_message(
+                chat_id=user_id,
+                text=message_text,
+                parse_mode="HTML"
+            )
+            await asyncio.sleep(0.3)
+        except Exception as e:
+            print(f"Failed to send message to {user_id}: {e}")
