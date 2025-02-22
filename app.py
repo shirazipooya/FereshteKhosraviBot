@@ -2,7 +2,7 @@ import os
 import time
 import json
 import asyncio
-from sqlmodel import SQLModel, create_engine, Session, select, text
+from sqlmodel import SQLModel, create_engine, Session, select, text, update
 from utils import jalali
 from collections import defaultdict
 from utils.assets import (
@@ -1078,7 +1078,25 @@ async def handle_broadcast(message):
     else:
         await bot.reply_to(message, "⚠️ Please provide a message after /broadcast.")
 
-
+# Add command for reset MAX_CALCULATION
+@bot.message_handler(commands=["reset"])
+async def reset(message):
+    
+    if message.from_user.id != 7690029281:
+        await bot.reply_to(message, "🚫 You are not authorized to use this command.")
+        return
+    
+    try:        
+        with Session(engine) as session:
+            session.exec(update(Kua).values(count_visit=0))
+            session.exec(update(Zodiac).values(count_visit=0))
+            session.commit()
+        await bot.reply_to(message, "✅ All count_visit values have been reset to zero.")
+        
+    except Exception as e:
+        await bot.reply_to(message, f"❌ An error occurred: {str(e)}")
+    
+    
 
 
 
