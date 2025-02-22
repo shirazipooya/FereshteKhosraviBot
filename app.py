@@ -84,6 +84,9 @@ with open('utils/kua.json', 'r', encoding='utf-8') as file:
 with open('utils/zodiac_animal_dataset.json', 'r', encoding='utf-8') as file:
     zodiac_animal_dataset = json.load(file)
 
+with open('utils/kua_elements.json', 'r', encoding='utf-8') as file:
+    kua_element = json.load(file)
+
 
 
 # ------------------------------------------------------------------------------
@@ -639,7 +642,7 @@ async def kua_command_handle_gender_selection(call):
                 )  
                     
             # Send Kua Number Result
-            file_path_voice = os.path.abspath(f"./data/اطلاعیه_مهم.mp4")
+            file_path_voice = os.path.abspath(f"./data/مهم.m4a")
             if not os.path.exists(file_path_voice):
                 print("File not found:", file_path_voice)
             else:
@@ -649,18 +652,21 @@ async def kua_command_handle_gender_selection(call):
                 await bot.send_audio(
                     chat_id=user_id,
                     audio=voice,
-                    caption=f"اطلاعیه بسیار مهم! حتما گوش بدید.",
+                    caption=f"پاکسازی قبل ۲۹ اسفند",
                     timeout=60
                 )         
-            
             
             await bot.send_message(
                 chat_id=user_id,
                 text=(
-                    "حالا اگه میخوای با استفاده از اطلاعاتی که کسب کردی سال 2025 که سال مار هست و با سرعت همه چی اتفاق میافته! تو هم با سرعت به سمت پیشرفت و درآمد قدم بگذاری !\n\n"    
-                    "همین الان به آیدی زیر پیام بده تا راهنماییت کنم.\n\n"      
+                    "اول این ویس بالا رو گوش بده ☝️\n\n"
+                    "بعد بر اساس عنصر شخصیت پاکسازیت رو انجام بده.\n\n"
+                    f"🔺 عدد شانس شما: {kua_number}\n"
+                    f"🔺 عنصر وجودی شما: {kua_element[kua_number]["element"]}\n"
+                    f"{kua_element[kua_number]["description"]}\n\n"
+                    "اگه سوالی داشتی به آیدی زیر پیام بده\n"
                     "@fereshtehelp\n"      
-                    "🔺🔺🔺🔺🔺\n"      
+                    "👆👆👆👆\n"      
                 ),
                 parse_mode="HTML",
             )
