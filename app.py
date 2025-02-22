@@ -655,15 +655,15 @@ async def kua_command_handle_gender_selection(call):
                     caption=f"پاکسازی قبل ۲۹ اسفند",
                     timeout=60
                 )         
-            
+            kn = str(kua_number)
             await bot.send_message(
                 chat_id=user_id,
                 text=(
                     "اول این ویس بالا رو گوش بده ☝️\n\n"
                     "بعد بر اساس عنصر شخصیت پاکسازیت رو انجام بده.\n\n"
-                    f"🔺 عدد شانس شما: {kua_number}\n"
-                    f"🔺 عنصر وجودی شما: {kua_element[kua_number]["element"]}\n"
-                    f"{kua_element[kua_number]["description"]}\n\n"
+                    f"🔺 عدد شانس شما: {kn}\n"
+                    f"🔺 عنصر وجودی شما: {kua_element[kn]["element"]}\n"
+                    f"{kua_element[kn]["description"]}\n\n"
                     "اگه سوالی داشتی به آیدی زیر پیام بده\n"
                     "@fereshtehelp\n"      
                     "👆👆👆👆\n"      
