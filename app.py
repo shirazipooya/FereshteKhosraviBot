@@ -1035,27 +1035,24 @@ async def send_message(message):
         result = session.exec(text(f"SELECT user_id FROM user"))
         results = [row[0] for row in result.fetchall()]
     message_text = (
-        "فقط توی لایو حضور داشته باش و برنده پک ثروتساز فنگشویی ۲۰۲۵ شو.\n\n"
-        "ساعت ۱۱:۱۱\n\n"
-        "بزن روی لینک زیر و بیا تو لایو 👇🏻\n\n"
-        "https://www.instagram.com/fengshui.by.fereshte?igsh=NmNraXp1Y3dtZzZx"
-        "\n\n🔺3 برنده پک لوازم فنگشویی2025\n"
-        "(به ارزش 5 میلیون تومان)\n\n"
-        "🔺8 کد طلایی 2025\n"
-        "🔺8 تکنیک طلایی 2025\n\n"
-        "☝️🔴27 دی ماه\n"
-        "ساعت 11:11\n"
-        "✅️ برای 500 نفر ثبت نام دوره ستارگان پروازی 2025 رو باز میکنم.\n\n"
-        "✅️به جای قیمت 3 میلیون میتونی با 888 ثبت نامتو انجام بدی\n\n"
+        "🌟ثبت نام هفت سین ثروتساز شروع شد🌷\n"
+        "۳۰۰ نفر اول ۳۰ کُد روزانه فروردین ۱۴۰۴\n"
+        "تکنیک لحظه تحویل سال\n"
+        "پاکسازی مخصوص خونه تکونی\n\n"
+        "بعلت مسدود شدن شماره کارت ها بدلیل حجم ثبت نامی ها\n\n"
+        "۲۴ ساعت دیگه ثبت نام تمدید شد."
     )
     n = 0
     for chat_id in results:
         try:
-            await bot.send_message(
-                chat_id=chat_id,
-                text=message_text,
-                parse_mode="HTML",                
-            )
+            file_path = os.path.abspath(f"./data/Poster.jpg")
+            with open(file_path, "rb") as photo:
+                await bot.send_photo(
+                    chat_id=chat_id,
+                    photo=photo,
+                    caption=message_text,
+                    parse_mode="HTML",
+                )
             n += 1
             time.sleep(0.2)
         except apihelper.ApiException as e:
