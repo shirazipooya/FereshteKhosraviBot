@@ -1076,9 +1076,9 @@ async def handle_broadcast(message):
         from_chat_id = message.chat.id
         message_id = message.reply_to_message.message_id
         await forward_message_to_all_users(engine=engine, table='user', bot=bot, from_chat_id=from_chat_id, message_id=message_id)
-        bot.send_message(from_chat_id, "Message has been forwarded to all users.")
+        await bot.send_message(from_chat_id, "Message has been forwarded to all users.")
     else:
-        bot.send_message(message.chat.id, "Please reply to the message you want to broadcast with /broadcast.")
+        await bot.send_message(message.chat.id, "Please reply to the message you want to broadcast with /broadcast.")
 
     # msg_text = message.text[len("/broadcast") :].strip()
     # if msg_text:
