@@ -423,3 +423,17 @@ async def send_message_to_all_users(engine, table, bot, message_text):
             await asyncio.sleep(0.3)
         except Exception as e:
             print(f"Failed to send message to {user_id}: {e}")
+
+
+async def forward_message_to_all_users(engine, table, bot, from_chat_id, message_id):
+    user_ids = get_all_user_ids(engine=engine, table=table)
+    for user_id in user_ids:
+        try:
+            await bot.forward_message(
+                user_id,
+                from_chat_id,
+                message_id
+            )
+            await asyncio.sleep(0.1)
+        except Exception as e:
+            print(f"Failed to forward message to {user_id}: {e}")

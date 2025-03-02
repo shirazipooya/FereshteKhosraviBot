@@ -24,6 +24,7 @@ from utils.assets import (
     calculate_zodiac_animal,
     send_join_channel_button,
     send_message_to_all_users,
+    forward_message_to_all_users,
     decade_buttons,
     year_buttons,
     month_buttons,
@@ -1071,12 +1072,20 @@ async def handle_broadcast(message):
         await bot.reply_to(message, "🚫 You are not authorized to use this command.")
         return
     
-    msg_text = message.text[len("/broadcast") :].strip()
-    if msg_text:
-        await send_message_to_all_users(engine=engine, table='user', bot=bot, message_text=msg_text)
-        await bot.reply_to(message, "✅ Message sent to all users!")
+    if message.reply_to_message:
+        from_chat_id = message.chat.id
+        message_id = message.reply_to_message.message_id
+        await forward_message_to_all_users(engine=engine, table='user', bot=bot, from_chat_id=from_chat_id, message_id=message_id)
+        bot.send_message(from_chat_id, "Message has been forwarded to all users.")
     else:
-        await bot.reply_to(message, "⚠️ Please provide a message after /broadcast.")
+        bot.send_message(message.chat.id, "Please reply to the message you want to broadcast with /broadcast.")
+
+    # msg_text = message.text[len("/broadcast") :].strip()
+    # if msg_text:
+    #     await send_message_to_all_users(engine=engine, table='user', bot=bot, message_text=msg_text)
+    #     await bot.reply_to(message, "✅ Message sent to all users!")
+    # else:
+    #     await bot.reply_to(message, "⚠️ Please provide a message after /broadcast.")
 
 # Add command for reset MAX_CALCULATION
 @bot.message_handler(commands=["reset"])
