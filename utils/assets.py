@@ -429,7 +429,7 @@ async def forward_message_to_all_users(engine, table, bot, from_chat_id, message
     user_ids = get_all_user_ids(engine=engine, table=table)
     for user_id in user_ids:
         try:
-            await bot.forward_message(
+            await bot.copy_message(
                 user_id,
                 from_chat_id,
                 message_id
