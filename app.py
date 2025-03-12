@@ -643,7 +643,7 @@ async def kua_command_handle_gender_selection(call):
                 )  
                     
             # Send Kua Number Result
-            file_path_voice = os.path.abspath(f"./data/مهم.m4a")
+            file_path_voice = os.path.abspath(f"./data/ویس_تکنیک_عدد_شانس.m4a")
             if not os.path.exists(file_path_voice):
                 print("File not found:", file_path_voice)
             else:
@@ -653,22 +653,14 @@ async def kua_command_handle_gender_selection(call):
                 await bot.send_audio(
                     chat_id=user_id,
                     audio=voice,
-                    caption=f"پاکسازی قبل ۲۹ اسفند",
+                    caption=f"ویس تکنیک عدد شانس",
                     timeout=60
                 )         
             kn = str(kua_number)
             await bot.send_message(
                 chat_id=user_id,
                 text=(
-                    "اول این ویس بالا رو گوش بده ☝️\n\n"
-                    "بعد بر اساس عنصر شخصیت پاکسازیت رو انجام بده.\n\n"
-                    f"🔺 عدد شانس شما: {kn}\n"
-                    f"🔺 عنصر وجودی شما: {kua_element[kn]["element"]}\n"
-                    f"{kua_element[kn]["description"]}\n\n"
-                    "پنجشنبه ۹ اسفند\n"
-                    "یادت باشه\n"
-                    "میخوام با هفت سین ثروتساز سورپرایزت کنم\n\n"
-                    "اگه سوالی داشتی به آیدی زیر پیام بده\n"
+                    "برای ثبت نام به آیدی زیر پیام بده:\n\n"
                     "@fereshtehelp\n"      
                     "👆👆👆👆\n"      
                 ),
@@ -934,7 +926,7 @@ async def zodiac_command_handle_day_selection(call):
             )
 
                     # Send Kua Number Result
-            file_path_voice = os.path.abspath(f"./data/اطلاعیه_مهم.mp4")
+            file_path_voice = os.path.abspath(f"./data/ویس_تکنیک_عدد_شانس.m4a")
             if not os.path.exists(file_path_voice):
                 print("File not found:", file_path_voice)
             else:
@@ -944,7 +936,7 @@ async def zodiac_command_handle_day_selection(call):
                 await bot.send_audio(
                     chat_id=user_id,
                     audio=voice,
-                    caption=f"اطلاعیه بسیار مهم! حتما گوش بدید.",
+                    caption=f"ویس تکنیک عدد شانس",
                     timeout=60
                 )
 
@@ -952,13 +944,7 @@ async def zodiac_command_handle_day_selection(call):
             await bot.send_message(
                 chat_id=user_id,
                 text=(
-                    "اگه میخوای با استفاده از اطلاعاتی که کسب کردی سال 2025 که سال مار هست و با سرعت همه چی اتفاق میافته! تو هم با سرعت به سمت پیشرفت و درآمد قدم بگذاری !\n\n"
-                    "❌❌❌❌\n\n"
-                    "۲۷ دی ماه\n"
-                    "ساعت ۱۱:۱۱\n"
-                    "ظرفیت ثبت نام دوره ستارگان رو برای ۵۰۰ نفر باز میکنم \n"
-                    "بجای ۳ میلیون میتونی این دوره رو با مبلغ ۸۸۸ هزار تومان تهیه کنی .\n\n"      
-                    "❌کلمه ثبت نام رو به آیدی زیر بفرست👇🏼\n\n"
+                    "برای ثبت نام به آیدی زیر پیام بده:\n\n"
                     "@fereshtehelp\n"      
                     "👆👆👆👆\n"      
                 ),
