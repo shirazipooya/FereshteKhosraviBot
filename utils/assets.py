@@ -3,7 +3,7 @@ import datetime
 import lunardate
 from sqlmodel import SQLModel, create_engine, Session, select, text
 from utils import jalali
-from models import User, Kua, Zodiac, Mashhad
+from models import User, Kua, Zodiac, Mashhad, Fengshui_Test
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import (
     InlineKeyboardMarkup,
@@ -77,7 +77,7 @@ CHINESE_ELEMENTS_FARSI = {
 def dashboard_keyboard():
     markup = InlineKeyboardMarkup()
     markup.add(
-        InlineKeyboardButton(text="ثبت نام سفر مشهد", callback_data="mashhad_button"),
+        InlineKeyboardButton(text="تست فنگ شویی", callback_data="fengshui_test_button"),
     )
     markup.add(
         InlineKeyboardButton(text="عدد شانس (کوا)", callback_data="kua_button"),
@@ -381,6 +381,23 @@ def insert_to_mashhad_table(
         user_id=user_id,
         name=name,
         city=city,
+    )
+    with Session(engine) as session:
+        session.merge(tmp)
+        session.commit()
+
+
+def insert_to_fengshui_test_table(
+    engine, user_id, f_name, l_name, phone, city, metrage, problem
+):
+    tmp = Fengshui_Test(
+        user_id=user_id,
+        f_name=f_name,
+        l_name=l_name,
+        phone=phone,
+        city=city,
+        metrage=metrage,
+        problem=problem
     )
     with Session(engine) as session:
         session.merge(tmp)

@@ -19,6 +19,7 @@ from utils.assets import (
     insert_to_kua_table,
     insert_to_zodiac_table,
     insert_to_mashhad_table,
+    insert_to_fengshui_test_table,
     extract_chinese_year,
     calculate_kua_number,
     calculate_zodiac_animal,
@@ -225,7 +226,7 @@ async def handle_city(message):
 #                              Handle Dashboard Command
 # ------------------------------------------------------------------------------ #
 
-@bot.callback_query_handler(func=lambda call: call.data in ["mashhad_button", "kua_button", "zodiac_button", "help_button", "start_button"])
+@bot.callback_query_handler(func=lambda call: call.data in ["mashhad_button", "kua_button", "zodiac_button", "help_button", "start_button", "fengshui_test_button"])
 async def handle_dashboard_callbacks(call):
     user_id=call.message.chat.id
     if call.data == "mashhad_button":
@@ -263,6 +264,8 @@ async def handle_dashboard_callbacks(call):
             await zodiac_command(call.message)
     elif call.data == "help_button":
         await start_command(call.message)
+    elif call.data == "fengshui_test_button":
+        await start_fengshui_test(call.message)
     elif call.data == "start_button":
         await start_command(call.message)
 
@@ -1095,6 +1098,320 @@ async def reset(message):
     
 
 
+# ------------------------------------------------------------------------------ #
+#                              Handle /FengShui Test Command
+# ------------------------------------------------------------------------------ #
+
+POLL_QUESTIONS = [
+    {
+        "q": "❓ سوال اول:\nمن ...",
+        "a": [
+            {"text": "شغلم را دوست دارم و درآمد خوبی دارم", "score": 9},
+            {"text": "شغلم را دوست دارم ولی درآمد کمی دارم", "score": 5},
+            {"text": "شغل و درآمدم را دوست ندارم و میخواهم آن را عوض کنم", "score": 3},
+        ]
+    },
+    {
+        "q": "❓ سوال دوم:\nمن تقریبا ...",
+        "a": [
+            {"text": "هر ماه سفر میروم", "score": 9},
+            {"text": "سالی 2 الی 3 بار سفر میروم", "score": 5},
+            {"text": "چند ساله سفر نرفته ام", "score": 3},
+        ]
+    },
+    {
+        "q": "❓ سوال سوم:\nوضعیت روابط عاشقانه ...",
+        "a": [
+            {"text": "متاهلم (در رابطه هستم)/ رابطه عالی دارم", "score": 9},
+            {"text": "متاهلم (در رابطه هستم)/ رابطه خوبی ندارم.", "score": 4},
+            {"text": "مجردم / کسی توی زندگیم نیست", "score": 7},
+        ]
+    },
+    {
+        "q": "❓ سوال چهارم:\nوضعیت سلامتی و بیماری ...",
+        "a": [
+            {"text": "خدارو شکر که از سلامتی کافی برخوردارم", "score": 9},
+            {"text": "هر ماه اعضای خانواده من مریض میشوند", "score": 4},
+            {"text": "متاسفانه درگیر بیماری طولانی هستم", "score": 3},
+        ]
+    },
+    {
+        "q": "❓ سوال پنجم:\nوضعیت روابط با نزدیکان ...",
+        "a": [
+            {"text": "با دوستان و فامیل رابطه عالی دارم", "score": 7},
+            {"text": "متاسفانه با نزدیکانم مشکل دادگاهی دارم", "score": 5},
+            {"text": "تنهایم و با کسی رابطه خوبی ندارم", "score": 4},
+        ]
+    },
+    {
+        "q": "❓ سوال ششم:\nوضعیت فرزندان ...",
+        "a": [
+            {"text": "فرزندان خوب و مطیعی دارم", "score": 8},
+            {"text": "فرزندان پرخاشگر و بی توجه به تحصیل دارم", "score": 3},
+            {"text": "میخواهم مادر شوم", "score": 3},
+            {"text": "فرزند ندارم", "score": 5},
+        ]
+    },
+    {
+        "q": "❓ سوال هفتم:\nدرآمد من ...",
+        "a": [
+            {"text": "زیر 10 میلیون است", "score": 2},
+            {"text": "بین 10 تا 20 میلیون است", "score": 6},
+            {"text": "25 میلیون به بالا است", "score": 9},
+        ]
+    },
+    {
+        "q": "❓ سوال هشتم:\nزمانیکه تصمیم به انجام کاری میگیرید، آن کار چطور پیش میرود؟",
+        "a": [
+            {"text": "آسان و راحت به نتیجه مورد نظر میرسد", "score": 7},
+            {"text": "خیلی سخت نتیجه میگیرم یا رهایش میکنم و آن کار را به سر انجام نمیرسانم", "score": 3},
+        ]
+    },
+    {
+        "q": "❓ سوال نهم:\nدرب ورودی شما در کدام جهت از نقشه خانه شما قرار گرفته است؟",
+        "a": [
+            {"text": "شمال", "score": 1},
+            {"text": "شمال شرقی", "score": 1},
+            {"text": "شرق", "score": 1},
+            {"text": "جنوب شرقی", "score": 1},
+            {"text": "جنوب", "score": 1},
+            {"text": "جنوب غربی", "score": 1},
+            {"text": "غرب", "score": 1},
+            {"text": "شمال غربی", "score": 1},
+            {"text": "نمیدانم", "score": 1},
+        ]
+    },
+    {
+        "q": "❓ سوال دهم:\nآشپزخانه شما در کدام جهت از نقشه خانه شما قرار گرفته است؟",
+        "a": [
+            {"text": "شمال", "score": 1},
+            {"text": "شمال شرقی", "score": 1},
+            {"text": "شرق", "score": 1},
+            {"text": "جنوب شرقی", "score": 1},
+            {"text": "جنوب", "score": 1},
+            {"text": "جنوب غربی", "score": 1},
+            {"text": "غرب", "score": 1},
+            {"text": "شمال غربی", "score": 1},
+            {"text": "نمیدانم", "score": 1},
+        ]
+    },
+    {
+        "q": "❓ سوال یازدهم:\nسرویس بهداشتی / حمام شما در کدام جهت از نقشه خانه شما قرار گرفته است؟",
+        "a": [
+            {"text": "شمال", "score": 1},
+            {"text": "شمال شرقی", "score": 1},
+            {"text": "شرق", "score": 1},
+            {"text": "جنوب شرقی", "score": 1},
+            {"text": "جنوب", "score": 1},
+            {"text": "جنوب غربی", "score": 1},
+            {"text": "غرب", "score": 1},
+            {"text": "شمال غربی", "score": 1},
+            {"text": "نمیدانم", "score": 1},
+        ]
+    },
+    {
+        "q": "❓ سوال دوازدهم:\nاتاق زوجین در کدام جهت از نقشه خانه شما قرار گرفته است؟",
+        "a": [
+            {"text": "شمال", "score": 1},
+            {"text": "شمال شرقی", "score": 1},
+            {"text": "شرق", "score": 1},
+            {"text": "جنوب شرقی", "score": 1},
+            {"text": "جنوب", "score": 1},
+            {"text": "جنوب غربی", "score": 1},
+            {"text": "غرب", "score": 1},
+            {"text": "شمال غربی", "score": 1},
+            {"text": "نمیدانم", "score": 1},
+        ]
+    },
+    {
+        "q": "❓ سوال سیزدهم:\nاتاق فرزند در کدام جهت از نقشه خانه شما قرار گرفته است؟",
+        "a": [
+            {"text": "شمال", "score": 1},
+            {"text": "شمال شرقی", "score": 1},
+            {"text": "شرق", "score": 1},
+            {"text": "جنوب شرقی", "score": 1},
+            {"text": "جنوب", "score": 1},
+            {"text": "جنوب غربی", "score": 1},
+            {"text": "غرب", "score": 1},
+            {"text": "شمال غربی", "score": 1},
+            {"text": "نمیدانم", "score": 1},
+        ]
+    },
+    {
+        "q": "❓ سوال چهاردهم:\nآیا در منزل شما یک یا همه موارد زیر وجود دارد؟ (راه پله / نور گیر / پاسیو / ستون)",
+        "a": [
+            {"text": "بله", "score": 1},
+            {"text": "خیر", "score": 1},
+        ]
+    },
+]
+
+async def simulate_progress(chat_id, n, text):
+    message = await bot.send_message(chat_id, f"{text}: [                    ] 0%")
+    for i in range(1, n + 1):
+        await asyncio.sleep(0.5)
+        progress = int((i / n) * 100)
+        bar = '█' * i + ' ' * (n - i)
+        await bot.edit_message_text(chat_id=chat_id, message_id=message.message_id,
+                                    text=f"{text}: [{bar}] {progress}%")
+    await bot.delete_message(chat_id=chat_id, message_id=message.message_id)
+
+
+user_poll_state = {}
+
+@bot.message_handler(commands=['fengshui_test'])
+async def start_fengshui_test(message):
+    user_id = message.chat.id
+    user_poll_state[user_id] = {"current": 0, "answers": []}
+    await bot.send_message(
+            chat_id=user_id,
+            text=(
+                "✋ سلام دوست من، سوالات تست زیر رو با دقت و واقعی جواب بده تا تحلیل کنم سطح فرکانس محیط زندگی تو از نظر فنگشویی در چه سطحیه.\n\n"
+                "📊 با این تست سطح انرژی منزل  شما بررسی می‌شود و با توجه به نتیجه تست راهکارهایی برای افزایش سطح انرژی به شما داده می‌شود.\n\n"
+                "⚠️ عزیز این تست شامل 14 سوال است. لطفا سعی کنید زیر ده دقیقه تست را انجام دهید.\n\n"
+                "🔴 در پاسخ به هر سوال لطفا نزدیکترین جوابی که به ذهنتان رسید را انتخاب کنید.\n\n"
+            ),
+            parse_mode="HTML",
+        )
+    await bot.send_message(
+            chat_id=user_id,
+            text=(
+                "📝 بیا شروع کنیم:\n\n"
+            ),
+            parse_mode="HTML",
+        )
+    await simulate_progress(user_id, n=10, text="🔄 یکم صبر کن تا سوال‌ها بارگزاری بشه ...\n")
+    await send_fengshui_question(user_id)
+
+
+async def send_fengshui_question(user_id):
+    state = user_poll_state.get(user_id)
+    if state is None:
+        return
+    idx = state["current"]
+    if idx < len(POLL_QUESTIONS):
+        q = POLL_QUESTIONS[idx]
+        markup = InlineKeyboardMarkup()
+        for i, ans in enumerate(q["a"]):
+            markup.add(InlineKeyboardButton(ans["text"], callback_data=f"poll_{idx}_{i}"))
+        sent_message = await bot.send_message(user_id, q["q"], reply_markup=markup, parse_mode="HTML")
+        state["last_question_message_id"] = sent_message.message_id
+    else:
+        total = sum(state["answers"])
+        await bot.send_message(user_id, f"📢 سوالات تمام شد!")
+        await simulate_progress(user_id, n=10, text="🔄 در حال محاسبه امتیاز نهایی\n")
+        await bot.send_message(
+            chat_id=user_id,
+            text=(
+                f"🗯 امتیاز نهایی شما {total} از 100! 🗯\n\n"
+                f"📝 این هم تحلیل تست فنگشویی شما:\n"
+                f"☹️ امتیاز زیر 40: خیلی بد\n"
+                f"😑 امتیاز بین 40 تا 70: وضعیت معمولی\n"
+                f"😊 امتیاز بالای 70: عالی\n"
+            ),
+            parse_mode="HTML",
+        )
+        
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("📝 ثبت درخواست فنگشویی آنلاین توسط خانم خسروی", callback_data="collect_info"))
+
+        await bot.send_message(
+            chat_id=user_id,
+            text="اگر مایل هستید مشاوره رایگان دریافت کنید تا فرکانس و انرژی محیط خود را بالا ببرید، روی دکمه زیر کلیک کنید 👇",
+            reply_markup=markup,
+            parse_mode="HTML"
+        )
+        user_poll_state.pop(user_id, None)
+
+
+user_data_form = {}
+
+@bot.callback_query_handler(func=lambda call: call.data == "collect_info")
+async def handle_collect_info(call):
+    user_id = call.message.chat.id
+    user_data_form[user_id] = {}
+    await bot.send_message(user_id, "🧑 لطفا اسم خود را وارد کنید:")
+
+@bot.message_handler(func=lambda message: message.chat.id in user_data_form and "f_name" not in user_data_form[message.chat.id])
+async def get_f_name(message):
+    user_data_form[message.chat.id]["f_name"] = message.text
+    await bot.send_message(message.chat.id, "🧑 لطفا فامیل خود را وارد کنید:")
+
+@bot.message_handler(func=lambda message: message.chat.id in user_data_form and "l_name" not in user_data_form[message.chat.id])
+async def get_l_name(message):
+    user_data_form[message.chat.id]["l_name"] = message.text
+    await bot.send_message(message.chat.id, "📱 لطفا شماره تلفن خود را وارد کنید:")
+
+@bot.message_handler(func=lambda message: message.chat.id in user_data_form and "phone" not in user_data_form[message.chat.id])
+async def get_phone(message):
+    user_data_form[message.chat.id]["phone"] = message.text
+    await bot.send_message(message.chat.id, "🏙 لطفا شهر محل سکونت خود را وارد کنید:")
+
+@bot.message_handler(func=lambda message: message.chat.id in user_data_form and "city" not in user_data_form[message.chat.id])
+async def get_city(message):
+    user_data_form[message.chat.id]["city"] = message.text
+    await bot.send_message(message.chat.id, "🏠 لطفا متراژ خانه خود را وارد کنید:")
+
+@bot.message_handler(func=lambda message: message.chat.id in user_data_form and "metrage" not in user_data_form[message.chat.id])
+async def get_metrage(message):
+    user_data_form[message.chat.id]["metrage"] = message.text
+    await bot.send_message(message.chat.id, "❓ مشکل یا چالشی که دارید را توضیح دهید:")
+
+@bot.message_handler(func=lambda message: message.chat.id in user_data_form and "problem" not in user_data_form[message.chat.id])
+async def get_problem(message):
+    user_id = message.chat.id
+    user_data_form[user_id]["problem"] = message.text
+
+    data = user_data_form.pop(user_id)
+
+    insert_to_fengshui_test_table(
+        engine=engine,
+        user_id=user_id,
+        f_name=data["f_name"],
+        l_name=data["l_name"],
+        phone=data["phone"],
+        city=data["city"],
+        metrage=data["metrage"],
+        problem=data["problem"]
+    )
+
+    await bot.send_message(user_id, "✅ اطلاعات شما با موفقیت ذخیره شد. همکاران ما با شما تماس خواهند گرفت.")
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("poll_"))
+async def handle_poll_answer(call):
+    user_id = call.message.chat.id
+    state = user_poll_state.get(user_id)
+    if not state:
+        await bot.answer_callback_query(call.id, "لطفا با /fengshui_test شروع کنید.")
+        return
+    _, idx, ans_idx = call.data.split("_")
+    idx = int(idx)
+    ans_idx = int(ans_idx)
+    if idx != state["current"]:
+        await bot.answer_callback_query(call.id, "این سوال قبلا پاسخ داده شده است.")
+        return
+    score = POLL_QUESTIONS[idx]["a"][ans_idx]["score"]
+    answer_text = POLL_QUESTIONS[idx]["a"][ans_idx]["text"]
+    state["answers"].append(score)
+    state["current"] += 1
+    
+    last_msg_id = state.get("last_question_message_id")
+    if last_msg_id:
+        try:
+            await bot.delete_message(chat_id=user_id, message_id=last_msg_id)
+        except Exception as e:
+            print(f"خطا در حذف پیام: {e}")
+
+    await send_fengshui_question(user_id)
+    await bot.answer_callback_query(call.id)
+ 
+
+# ------------------------------------------------------------------------------ #
+#                              Handle /FengShui Test Command
+# ------------------------------------------------------------------------------ #
+
+
 
 
 async def main():
@@ -1113,7 +1430,7 @@ async def main():
             BotCommand("kua", "عدد شانس (کوا)"),
             BotCommand("zodiac", "محاسبه زودیاک تولد"),
             BotCommand("help", "راهنما"),
-            # BotCommand("send", "راهنما"),
+            BotCommand("fengshui_test", "تست فنگ شویی"),
          ]
     )
     

@@ -35,3 +35,14 @@ class Mashhad(SQLModel, table=True):
     name: Optional[str]
     city: Optional[str]
     create_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class Fengshui_Test(SQLModel, table=True):
+    user_id: Optional[int] = Field(primary_key=True)
+    f_name: Optional[str]
+    l_name: Optional[str]
+    phone: Optional[str]
+    city: Optional[str]
+    metrage: Optional[str]
+    problem: Optional[str]
+    create_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
