@@ -46,3 +46,13 @@ class Fengshui_Test(SQLModel, table=True):
     metrage: Optional[str]
     problem: Optional[str]
     create_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Fengshui_Score(SQLModel, table=True):
+    user_id: Optional[int] = Field(primary_key=True)
+    score: Optional[int]
+    create_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserReplyState(SQLModel, table=True):
+    user_id: int = Field(primary_key=True)
+    is_waiting: bool = Field(default=False)

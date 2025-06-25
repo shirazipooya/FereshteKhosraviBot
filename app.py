@@ -20,6 +20,7 @@ from utils.assets import (
     insert_to_zodiac_table,
     insert_to_mashhad_table,
     insert_to_fengshui_test_table,
+    insert_to_fengshui_score_table,
     extract_chinese_year,
     calculate_kua_number,
     calculate_zodiac_animal,
@@ -34,7 +35,7 @@ from utils.assets import (
     check_visit_count,
     check_register
 )
-from models import User, Kua, Zodiac, Mashhad
+from models import User, Kua, Zodiac, Mashhad, UserReplyState
 from dotenv import load_dotenv
 from telebot import apihelper
 from telebot.async_telebot import AsyncTeleBot
@@ -134,7 +135,7 @@ async def start_command(message):
     else:
         user_data[message.chat.id] = "awaiting_phone"
         phone_button = KeyboardButton(
-            text="ارسال شماره", 
+            text="👈🏻ارسال شماره 👉🏻", 
             request_contact=True
         )
         keyboard = ReplyKeyboardMarkup(
@@ -1000,60 +1001,6 @@ async def get_user_count(message):
         f"تعداد کل افراد: {user_count}"
     )
 
-@bot.message_handler(commands=['sql'])
-async def get_user_count(message):
-    if message.text == "/sql":
-        name = "given_name"
-    else:
-        name = message.text.replace("/sql ", "")
-    try:
-        with Session(engine) as session:
-            result = session.exec(text(f"SELECT {name} FROM user"))
-            results = [row[0] for row in result.fetchall()]
-            results_text = "\n".join(results) + "\n"
-    except:
-        results_text = "دستور اشتباه!"
-        
-    await bot.send_message(
-        chat_id=message.chat.id,
-        text=results_text
-    )
-
-@bot.message_handler(commands=['send_message'])
-async def send_message(message):
-    with Session(engine) as session:
-        result = session.exec(text(f"SELECT user_id FROM user"))
-        results = [row[0] for row in result.fetchall()]
-    message_text = (
-        "🌟ثبت نام هفت سین ثروتساز شروع شد🌷\n"
-        "۳۰۰ نفر اول ۳۰ کُد روزانه فروردین ۱۴۰۴\n"
-        "تکنیک لحظه تحویل سال\n"
-        "پاکسازی مخصوص خونه تکونی\n\n"
-        "بعلت مسدود شدن شماره کارت ها بدلیل حجم ثبت نامی ها\n\n"
-        "۲۴ ساعت دیگه ثبت نام تمدید شد."
-    )
-    n = 0
-    for chat_id in results:
-        try:
-            file_path = os.path.abspath(f"./data/Poster.jpg")
-            with open(file_path, "rb") as photo:
-                await bot.send_photo(
-                    chat_id=chat_id,
-                    photo=photo,
-                    caption=message_text,
-                    parse_mode="HTML",
-                )
-            n += 1
-            time.sleep(0.2)
-        except apihelper.ApiException as e:
-            print(f"Error for {chat_id}: {e}")
-        except Exception as e:
-            print(f"Unexpected error for {chat_id}: {e}")
-            
-    await bot.send_message(
-        chat_id=message.chat.id,
-        text=f"Send Message to {n} Users!"
-    )
 
 @bot.message_handler(commands=["broadcast"])
 async def handle_broadcast(message):
@@ -1095,6 +1042,108 @@ async def reset(message):
     except Exception as e:
         await bot.reply_to(message, f"❌ An error occurred: {str(e)}")
     
+
+
+@bot.message_handler(commands=['send_message'])
+async def send_message(message):
+    with Session(engine) as session:
+        result = session.exec(text(f"SELECT * FROM user"))
+        results = [(row.user_id, row.given_name, row.city) for row in result.fetchall()]
+    n = 0
+    for item in results:
+        try:
+            user_id, given_name, city = item
+            message_text = (
+                f"سلام {given_name} عزیز!\n"
+                "فرشته خسروی هستم.\n"
+                "برای ارتباط بهتر و همراهی همیشگیتون\n"
+                "حتما\n"
+                "✅کانال ایتا و\n"
+                "✅کانال روبیکا و\n"
+                "✅ کانال تلگرام\n"
+                "✅شماره پشتیبانی\n\n"
+                "رو داشته باشید\n\n"
+                "لینک کانال ایتا👇\n"
+                "https://eitaa.com/halekhob999\n\n"
+                "لینک کانال روبیکا👇\n"
+                "https://rubika.ir/helekhobmalkhob\n\n"
+                "لینک کانال تلگرام 👇\n"
+                "https://t.me/helekhobmalkhob\n\n"
+                "شماره پشتیبانی مستقیم👇\n"
+                "09364998675\n"
+                "آقای روان بخش\n\n"
+                "به امید روزای خوب 💚"
+                "دوستت دارم/فرشته💚\n\n\n"
+                "(اگر میخوایید پیامی برامون بفرستید روی دکمه زیر بزنین و پیامتون رو یکجا ارسال کنین)\n\n"
+            )
+            
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(
+                InlineKeyboardButton("✉️ ارسال پیام", callback_data=f"reply_{user_id}")
+            )
+            
+            await bot.send_message(
+                chat_id=user_id,
+                text=message_text,
+                parse_mode="HTML",
+                reply_markup=keyboard
+            )
+            await asyncio.sleep(0.3)
+            n += 1
+        except apihelper.ApiException as e:
+            print(f"Error for {user_id}: {e}")
+        except Exception as e:
+            print(f"Unexpected error for {user_id}: {e}")
+            
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=f"Send Message to {n} Users!"
+    )
+
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("reply_"))
+async def handle_reply_request(call):
+    user_id = call.from_user.id
+
+    with Session(engine) as session:
+        state = session.get(UserReplyState, user_id)
+        if state:
+            state.is_waiting = True
+        else:
+            state = UserReplyState(user_id=user_id, is_waiting=True)
+            session.add(state)
+        session.commit()
+
+    await bot.send_message(
+        chat_id=user_id,
+        text="📝 حالا پیامت رو برام بنویس\nمن می‌خونمش با دقت ❤️"
+    )
+
+
+@bot.message_handler(func=lambda msg: True)
+async def handle_user_reply(msg):
+    user_id = msg.from_user.id
+    with Session(engine) as session:
+        state = session.get(UserReplyState, user_id)
+        if state and state.is_waiting:
+            state.is_waiting = False
+            session.commit()
+
+            await bot.send_message(
+                chat_id=6561974562,
+                text=f"📩 پیام جدید از {msg.from_user.full_name} (ID: {user_id}):\n\n{msg.text}",
+            )
+
+            await bot.send_message(
+                chat_id=user_id,
+                text="پیامت رسید ✅ ممنونم ازت ❤️"
+            )
+
+
+
+
+
     
 
 
@@ -1164,7 +1213,7 @@ POLL_QUESTIONS = [
         "q": "❓ سوال هشتم:\nزمانیکه تصمیم به انجام کاری میگیرید، آن کار چطور پیش میرود؟",
         "a": [
             {"text": "آسان و راحت به نتیجه مورد نظر میرسد", "score": 7},
-            {"text": "خیلی سخت نتیجه میگیرم یا رهایش میکنم و آن کار را به سر انجام نمیرسانم", "score": 3},
+            {"text": "خیلی سخت نتیجه میگیرم یا رهایش میکنم", "score": 3},
         ]
     },
     {
@@ -1253,7 +1302,7 @@ async def simulate_progress(chat_id, n, text):
         progress = int((i / n) * 100)
         bar = '█' * i + ' ' * (n - i)
         await bot.edit_message_text(chat_id=chat_id, message_id=message.message_id,
-                                    text=f"{text}: [{bar}] {progress}%")
+                                    text=f"{text}[{bar}] {progress}%")
     await bot.delete_message(chat_id=chat_id, message_id=message.message_id)
 
 
@@ -1267,7 +1316,10 @@ async def start_fengshui_test(message):
             chat_id=user_id,
             text=(
                 "✋ سلام دوست من، سوالات تست زیر رو با دقت و واقعی جواب بده تا تحلیل کنم سطح فرکانس محیط زندگی تو از نظر فنگشویی در چه سطحیه.\n\n"
-                "📊 با این تست سطح انرژی منزل  شما بررسی می‌شود و با توجه به نتیجه تست راهکارهایی برای افزایش سطح انرژی به شما داده می‌شود.\n\n"
+                "✅✅✅✅✅✅✅\n"
+                "این تست اختصاصی توسط تیم فرشته خسروی برای اولین بار در ایران طراحی و اجرا شده است و میتوانید سنجش ارتعاش محیط خود را انجام دهید.\n"
+                "✅✅✅✅✅✅✅\n\n"
+                "📊 با این تست سطح انرژی منزل  شما بررسی می‌شود و با توجه به نتیجه تست راهکارهایی برای افزایش سطح انرژی به شما داده می‌شود."
                 "⚠️ عزیز این تست شامل 14 سوال است. لطفا سعی کنید زیر ده دقیقه تست را انجام دهید.\n\n"
                 "🔴 در پاسخ به هر سوال لطفا نزدیکترین جوابی که به ذهنتان رسید را انتخاب کنید.\n\n"
             ),
@@ -1299,12 +1351,12 @@ async def send_fengshui_question(user_id):
     else:
         total = sum(state["answers"])
         await bot.send_message(user_id, f"📢 سوالات تمام شد!")
-        await simulate_progress(user_id, n=10, text="🔄 در حال محاسبه امتیاز نهایی\n")
+        await simulate_progress(user_id, n=12, text="🔄 در حال محاسبه امتیاز نهایی ...\n")
         await bot.send_message(
             chat_id=user_id,
             text=(
                 f"🗯 امتیاز نهایی شما {total} از 100! 🗯\n\n"
-                f"📝 این هم تحلیل تست فنگشویی شما:\n"
+                f"📝 این هم تحلیل تست فنگشویی شما:\n\n"
                 f"☹️ امتیاز زیر 40: خیلی بد\n"
                 f"😑 امتیاز بین 40 تا 70: وضعیت معمولی\n"
                 f"😊 امتیاز بالای 70: عالی\n"
@@ -1312,12 +1364,24 @@ async def send_fengshui_question(user_id):
             parse_mode="HTML",
         )
         
+        insert_to_fengshui_score_table(
+            engine=engine,
+            user_id=user_id,
+            score=total
+        )
+
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("📝 ثبت درخواست فنگشویی آنلاین توسط خانم خسروی", callback_data="collect_info"))
+        markup.add(InlineKeyboardButton("📝 ثبت درخواست", callback_data="collect_info"))
 
         await bot.send_message(
             chat_id=user_id,
-            text="اگر مایل هستید مشاوره رایگان دریافت کنید تا فرکانس و انرژی محیط خود را بالا ببرید، روی دکمه زیر کلیک کنید 👇",
+            text=(
+                "😍 در صورت تمایل میتوانید از فنگشویی توسط خود خانم خسروی  استفاده کنید و فرکانس و انرژی محیط خود را بالا ببرید.\n\n"    
+                "✅فنگشویی توسط خود خانم خسروی به صورت حضوری (ظرفیت تا آخر تابستان تکمیل ): متری ۲۰۰ هزار تومان و \n\n"
+                "به صورت آنلاین :متری ۱۰۰ هزار تومان\n"
+                "🛑یعنی مبلغ برای فنگشویی آنلاین یک خونه ۱۰۰ متری ۱۰ میلیون تومان است.\n\n"
+                "در صورت تمایل رزرو فنگشویی خود را انجام دهید‌👇🏼\n"
+            ),
             reply_markup=markup,
             parse_mode="HTML"
         )
@@ -1420,6 +1484,7 @@ async def main():
             "👋  سلام عشق فرشته 💚😍\n\n"
             "🤖  خیلی خوشحالم که همراه آموزش‌ها بودی. قراره با استفاده از این ربات به صورت رایگان عدد کوا و زودیاک خودت و اعضای خانوادتو محاسبه کنم و بهت بگم تا خیالت از انرژی‌های 2025 راحت باشه.\n\n"
             "🚺📅🚹   کافیه به ترتیب سال / ماه / روز تولدت و جنسیت رو انتخاب کنی تا من بهت بگم عدد شانس و زودیاکت چی هست!\n\n"
+            "این ربات قابلیت اینو داره که با پاسخگویی به چند سوال ساده سطح فرکانس و ارتعاش محیطتت رو بسنجه\n\n"
             "💡   برای شروع روی /start بزن!"
         ),
     )

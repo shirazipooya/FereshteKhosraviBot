@@ -3,7 +3,7 @@ import datetime
 import lunardate
 from sqlmodel import SQLModel, create_engine, Session, select, text
 from utils import jalali
-from models import User, Kua, Zodiac, Mashhad, Fengshui_Test
+from models import User, Kua, Zodiac, Mashhad, Fengshui_Test, Fengshui_Score
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import (
     InlineKeyboardMarkup,
@@ -398,6 +398,18 @@ def insert_to_fengshui_test_table(
         city=city,
         metrage=metrage,
         problem=problem
+    )
+    with Session(engine) as session:
+        session.merge(tmp)
+        session.commit()
+
+
+def insert_to_fengshui_score_table(
+    engine, user_id, score
+):
+    tmp = Fengshui_Score(
+        user_id=user_id,
+        score=score
     )
     with Session(engine) as session:
         session.merge(tmp)
