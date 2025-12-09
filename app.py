@@ -632,41 +632,63 @@ async def kua_command_handle_gender_selection(call):
                 text=f"📝 اطلاعات دریافت‌ شده:\n- تاریخ تولد: {birth_year}/{birth_month}/{birth_day}\n- جنسیت: {'مرد' if gender == 'male' else 'زن'}"
             )
             
-            # Send Kua Number Result
-            file_path = os.path.abspath(f"./data/img/kua_number_{kua_number}.png")
-            if not os.path.exists(file_path):
-                print("File not found:", file_path)
-            else:
-                print("File founded:", file_path)
-            with open(file_path, "rb") as photo:
-                print("File opened successfully", file_path)
-                await bot.send_photo(
-                    chat_id=user_id,
-                    photo=photo,
-                    caption=f"عدد کوا شما «{kua_number}» می‌باشد!",
-                )  
+            # # Send Kua Number Result
+            # file_path = os.path.abspath(f"./data/img/kua_number_{kua_number}.png")
+            # if not os.path.exists(file_path):
+            #     print("File not found:", file_path)
+            # else:
+            #     print("File founded:", file_path)
+            # with open(file_path, "rb") as photo:
+            #     print("File opened successfully", file_path)
+            #     await bot.send_photo(
+            #         chat_id=user_id,
+            #         photo=photo,
+            #         caption=f"عدد کوا شما «{kua_number}» می‌باشد!",
+            #     )  
                     
-            # Send Kua Number Result
-            file_path_voice = os.path.abspath(f"./data/ویس_تکنیک_عدد_شانس.m4a")
-            if not os.path.exists(file_path_voice):
-                print("File not found:", file_path_voice)
-            else:
-                print("File founded:", file_path_voice)
-            with open(file_path_voice, "rb") as voice:
-                print("File opened successfully", file_path_voice)
-                await bot.send_audio(
-                    chat_id=user_id,
-                    audio=voice,
-                    caption=f"ویس تکنیک عدد شانس",
-                    timeout=60
-                )         
-            kn = str(kua_number)
+            # # Send Kua Number Result
+            # file_path_voice = os.path.abspath(f"./data/ویس_تکنیک_عدد_شانس.m4a")
+            # if not os.path.exists(file_path_voice):
+            #     print("File not found:", file_path_voice)
+            # else:
+            #     print("File founded:", file_path_voice)
+            # with open(file_path_voice, "rb") as voice:
+            #     print("File opened successfully", file_path_voice)
+            #     await bot.send_audio(
+            #         chat_id=user_id,
+            #         audio=voice,
+            #         caption=f"ویس تکنیک عدد شانس",
+            #         timeout=60
+            #     )         
+            # kn = str(kua_number)
+            # await bot.send_message(
+            #     chat_id=user_id,
+            #     text=(
+            #         "برای ثبت نام به آیدی زیر پیام بده:\n\n"
+            #         "@fereshtehelp\n"      
+            #         "👆👆👆👆\n"      
+            #     ),
+            #     parse_mode="HTML",
+            # )
+            
+                        
             await bot.send_message(
                 chat_id=user_id,
                 text=(
-                    "برای ثبت نام به آیدی زیر پیام بده:\n\n"
-                    "@fereshtehelp\n"      
-                    "👆👆👆👆\n"      
+                    f"عدد کوا (شانس) شما {kua_number} میباشد.\n\n"
+                    f"عنصر شما {kua_element[str(kua_number)]["element"]} است."
+                ),
+                parse_mode="HTML",
+            )
+            
+            await bot.send_message(
+                chat_id=user_id,
+                text=(
+                    "استوری های پیج رو دنبال کن\n"
+                    "چون میخوام این چند روز درباره این صحبت کنم که چیکار کنی تا همیشه خوش شانس باشی.\n"
+                    "توی دوره فنگشویی هم کامل بهت توضیح دادم چیکار کنی تا همیشه در مدار پول و ثروت قرار بگیری.\n\n"
+                    "اگه سوالی هم داری از این آیدی بپرس\n"
+                    "@fereshtehelp"
                 ),
                 parse_mode="HTML",
             )

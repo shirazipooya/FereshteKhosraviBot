@@ -6,8 +6,6 @@ __pycache__/
 utils/__pycache__/
 utils/__pycache__/jalali.cpython-312.pyc
 
-*.db
-
 # Files
 .env
 *.pyc
