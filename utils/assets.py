@@ -9,6 +9,7 @@ from telebot.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
+from sqlalchemy import or_
 
 
 
