@@ -462,6 +462,7 @@ async def forward_message_to_users(
     cities
 ):
     cities = [c.strip() for c in (cities or []) if c.strip()]
+    print(cities)
     
     with Session(engine) as session:
         stmt = select(User.user_id)
@@ -473,7 +474,6 @@ async def forward_message_to_users(
         user_ids = session.exec(stmt).all()
 
     sent_count = 0
-    print(user_ids)
     for user_id in user_ids:
         print(user_id)
         try:
