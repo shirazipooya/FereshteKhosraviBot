@@ -1024,7 +1024,7 @@ async def get_user_count(message):
     )
 
 
-@bot.message_handler(commands=["broadcast"])
+@bot.message_handler(commands=["send"])
 async def handle_broadcast(message):
     print(message.from_user.id)
     if message.from_user.id not in [7690029281, 52260445]:
@@ -1032,12 +1032,35 @@ async def handle_broadcast(message):
         return
     
     if message.reply_to_message:
+        parts = message.text.split()
+        city_keywords = parts[1:] if len(parts) > 1 else []
+        
         from_chat_id = message.chat.id
         message_id = message.reply_to_message.message_id
-        await forward_message_to_all_users(engine=engine, table='user', bot=bot, from_chat_id=from_chat_id, message_id=message_id)
-        await bot.send_message(from_chat_id, "Message has been forwarded to all users.")
+        
+        await bot.send_message(from_chat_id, "ارسال پیام آغاز شد!")
+        
+        sent_count = await forward_message_to_users(
+            engine=engine,
+            bot=bot,
+            from_chat_id=from_chat_id,
+            message_id=message_id,
+            cities=city_keywords
+        )
+        
+        if city_keywords:
+            cities_str = "، ".join(city_keywords)
+            await bot.reply_to(
+                message,
+                f" پیام به {sent_count} نفر با شهرهای شامل: {cities_str} ارسال شد ✅",
+            )
+        else:
+            await bot.reply_to(
+                message,
+                f" پیام بدون فیلتر شهر، برای {sent_count} نفر فوروارد شد ✅",
+            )        
     else:
-        await bot.send_message(message.chat.id, "Please reply to the message you want to broadcast with /broadcast.")
+        await bot.send_message(message.chat.id, "برای ارسال پیام گروهی، باید روی آن پیام ریپلای کرده و دستور /send را بنویسی.")
 
     # msg_text = message.text[len("/broadcast") :].strip()
     # if msg_text:

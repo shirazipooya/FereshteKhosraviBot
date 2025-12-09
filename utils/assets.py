@@ -440,29 +440,67 @@ def get_all_user_ids(engine, table):
     return [row[0] for row in result.fetchall()]
 
 
-async def send_message_to_all_users(engine, table, bot, message_text):
-    user_ids = get_all_user_ids(engine=engine, table=table)
-    for user_id in user_ids:
-        try:
-            await bot.send_message(
-                chat_id=user_id,
-                text=message_text,
-                parse_mode="HTML"
-            )
-            await asyncio.sleep(0.3)
-        except Exception as e:
-            print(f"Failed to send message to {user_id}: {e}")
+# async def send_message_to_all_users(engine, table, bot, message_text):
+#     user_ids = get_all_user_ids(engine=engine, table=table)
+#     for user_id in user_ids:
+#         try:
+#             await bot.send_message(
+#                 chat_id=user_id,
+#                 text=message_text,
+#                 parse_mode="HTML"
+#             )
+#             await asyncio.sleep(0.3)
+#         except Exception as e:
+#             print(f"Failed to send message to {user_id}: {e}")
 
 
-async def forward_message_to_all_users(engine, table, bot, from_chat_id, message_id):
-    user_ids = get_all_user_ids(engine=engine, table=table)
+async def forward_message_to_users(
+    *,
+    engine,
+    bot,
+    from_chat_id,
+    message_id,
+    cities
+):
+    cities = [c.strip() for c in (cities or []) if c.strip()]
+    
+    with Session(engine) as session:
+        stmt = select(User.user_id)
+
+        if cities:
+            conditions = [User.city.ilike(f"%{c}%") for c in cities]
+            stmt = stmt.where(or_(*conditions))
+
+        user_ids = session.exec(stmt).all()
+
+    sent_count = 0
+
     for user_id in user_ids:
         try:
             await bot.copy_message(
-                user_id,
-                from_chat_id,
-                message_id
+                chat_id=user_id,
+                from_chat_id=from_chat_id,
+                message_id=message_id,
             )
-            await asyncio.sleep(0.1)
+            sent_count += 1
+            await asyncio.sleep(0.05)
         except Exception as e:
-            print(f"Failed to forward message to {user_id}: {e}")
+            print(f" مشکل در ارسال پیام برای {user_id}: {e}")
+
+    return sent_count
+    
+    
+    
+    
+    
+    # user_ids = get_all_user_ids(engine=engine, table=table)
+    # for user_id in user_ids:
+    #     try:
+    #         await bot.copy_message(
+    #             user_id,
+    #             from_chat_id,
+    #             message_id
+    #         )
+    #         await asyncio.sleep(0.1)
+    #     except Exception as e:
+    #         print(f"Failed to forward message to {user_id}: {e}")
