@@ -455,7 +455,6 @@ def get_all_user_ids(engine, table):
 
 
 async def forward_message_to_users(
-    *,
     engine,
     bot,
     from_chat_id,
@@ -474,13 +473,14 @@ async def forward_message_to_users(
         user_ids = session.exec(stmt).all()
 
     sent_count = 0
-
+    print(user_ids)
     for user_id in user_ids:
+        print(user_id)
         try:
             await bot.copy_message(
-                chat_id=user_id,
-                from_chat_id=from_chat_id,
-                message_id=message_id,
+                user_id,
+                from_chat_id,
+                message_id,
             )
             sent_count += 1
             await asyncio.sleep(0.05)
