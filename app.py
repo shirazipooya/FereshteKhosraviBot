@@ -1026,7 +1026,7 @@ async def get_user_count(message):
 @bot.message_handler(commands=["send"])
 async def handle_broadcast(message):
     print(message.from_user.id)
-    if message.from_user.id not in [7690029281, 52260445, 917104518]:
+    if message.from_user.id not in [7690029281, 52260445, 917104518, 6561974562]:
         await bot.reply_to(message, "🚫 You are not authorized to use this command.")
         return
     
